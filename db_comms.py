@@ -4,12 +4,15 @@ import sys
 import os
 import csv
 from datetime import datetime
+import random as r
 
-conn = sql.connect('database.db')
+db_path = os.path.join(os.path.dirname(__file__), 'database.db')
+conn = sql.connect(db_path)
 
 cursor=conn.cursor()
 
-with open('commands.sql', "r") as f:
+sql_file_path = os.path.join(os.path.dirname(__file__), 'commands.sql')
+with open(sql_file_path, "r") as f:
     sql_script = f.read()
 cursor.executescript(sql_script)
 conn.commit()
@@ -56,10 +59,26 @@ def check_vat(v):
     else:
         return False
     
+def valid_custid(cid):
+    cid_lookup = cursor.execute(
+        "SELECT * FROM customers WHERE cust_id = ?",(cid,)
+    )
+    res = cid_lookup.fetchone()
+    if res:
+        return True
+    else:
+        return False
+
 def new_customer_back(n,p,e,a,v,user):
+    while True:
+        cust_id = r.randint(100001,999999)
+        cust_id_lookup=valid_custid(cust_id)
+        if cust_id == False:
+            break
+
     if check_phone(p) == False and check_email(e) == False and check_vat(v) == False:
         cursor.execute(
-            "INSERT INTO customers (name,phone,email,address,vat) VALUES (?,?,?,?,?)",(n,p,e,a,v)
+            "INSERT INTO customers (name,phone,email,address,vat,cust_id) VALUES (?,?,?,?,?,?)",(n,p,e,a,v,cust_id)
         )
         cust_id = cursor.lastrowid
         conn.commit()
@@ -244,7 +263,22 @@ def add_stock(sku,stock,u):
     else:
         return f"Δεν βρέθηκε πελάτης"
 
+def search_uid(uid):
+    search = cursor.execute(
+        "SELECT * FROM users WHERE user_id = ?",(uid,)
+    )
+    res = search.fetchone()
+    if res:
+        return True
+    else:
+        return False
+
 def create_user(c_u,n_u,p,r_n,isadmin):
+    while True:
+        user_id = r.randint(100001,999999)
+        user_id_occ = search_uid(user_id)
+        if user_id_occ == False:
+            break
     fetch_users = cursor.execute(
         "SELECT * FROM users WHERE username = ?",(n_u,)
     )
@@ -252,7 +286,7 @@ def create_user(c_u,n_u,p,r_n,isadmin):
     if not user_check:
         encrypted_pass = hashlib.sha256(p.encode()).hexdigest()
         cursor.execute(
-            "INSERT INTO users (username, passw, real_name, is_admin) VALUES (?, ?, ?, ?)",(n_u,encrypted_pass,r_n,isadmin)
+            "INSERT INTO users (username, passw, real_name, is_admin, user_id) VALUES (?, ?, ?, ?, ?)",(n_u,encrypted_pass,r_n,isadmin,user_id)
         )
         conn.commit()
         create_logs(c_u,f"Create user {n_u}")

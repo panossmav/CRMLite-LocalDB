@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS customers(
     email TEXT NOT NULL,
     address TEXT,
     vat INTEGER,
-    cust_id INTEGER PRIMARY KEY AUTOINCREMENT
+    cust_id INTEGER PRIMARY KEY 
 );
 
 CREATE TABLE IF NOT EXISTS products(
@@ -36,6 +36,6 @@ CREATE TABLE IF NOT EXISTS users(
     username TEXT NOT NULL,
     passw TEXT NOT NULL,
     real_name TEXT,
-    user_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER PRIMARY KEY,
     is_admin INTEGER NOT NULL
 );
